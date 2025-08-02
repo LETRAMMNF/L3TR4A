@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Procesador de Tarjetas</title>
+    <style>
+        :root {
+            --tg-primary: #0088cc;
+            --tg-secondary: #ebedef;
+            --tg-text: #000000;
+            --tg-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--tg-secondary);
+            color: var(--tg-text);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--tg-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: var(--tg-primary);
+            color: white;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .header img {
+            width: 32px;
+            height: 32px;
+            margin-right: 12px;
+        }
+
+        .input-section, .output-section {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .section-title {
+            margin: 0 0 12px 0;
+            font-weight: 500;
+            color: var(--tg-primary);
+            display: flex;
+            align-items: center;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: monospace;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .output-area {
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 12px;
+            min-height: 150px;
+            font-family: monospace;
+            font-size: 14px;
+            white-space: pre;
+            overflow-x: auto;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: var(--tg-primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+
+        button:hover {
+            background-color: #006ba3;
+        }
+
+        .copy-btn {
+            background-color: #4caf50;
+            margin-left: 10px;
+        }
+
+        .copy-btn:hover {
+            background-color: #3d8b40;
+        }
+
+        .example-text {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+
+        .btn-container {
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/a9c04278-fb01-40a8-bac7-799a8b1803d6.png" alt="Icono de telegram estilo de aplicación" />
+            Procesador de Tarjetas
+        </div>
+
+        <div class="input-section">
+            <h3 class="section-title">Datos Originales</h3>
+            <p class="example-text">
+                Ejemplo: 5189410221026647|02|29|270|BillBatton|... (puedes pegar varias líneas)
+            </p>
+            <textarea id="inputData" placeholder="Pega aquí los datos de las tarjetas..."></textarea>
+            <div class="btn-container">
+                <button id="processBtn">Procesar Datos</button>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <h3 class="section-title">Resultados Formateados</h3>
+            <p class="example-text">
+                Formato: Número|Mes|Año(4 dígitos)|CVV
+            </p>
+            <div id="outputArea" class="output-area"></div>
+            <button id="copyBtn" class="copy-btn">Copiar Resultados</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputData = document.getElementById('inputData');
+            const outputArea = document.getElementById('outputArea');
+            const processBtn = document.getElementById('processBtn');
+            const copyBtn = document.getElementById('copyBtn');
+
+            processBtn.addEventListener('click', processData);
+            copyBtn.addEventListener('click', copyResults);
+
+            function processData() {
+                const rawData = inputData.value.trim();
+                if (!rawData) {
+                    outputArea.textContent = "Por favor, introduce datos para procesar.";
+                    return;
+                }
+
+                const lines = rawData.split('\n');
+                let processedLines = [];
+
+                lines.forEach(line => {
+                    line = line.trim();
+                    if (!line) return;
+
+                    // Extraer los componentes básicos
+                    const parts = line.split('|');
+                    if (parts.length < 4) return; // Línea no válida
+
+                    const cardNumber = parts[0].trim();
+                    const month = parts[1].trim().padStart(2, '0');
+                    let year = parts[2].trim();
+                    const cvv = parts[3].trim();
+
+                    // Ajustar el año a 4 dígitos (asumimos que si viene con 2 dígitos es 20XX)
+                    if (year.length === 2) {
+                        year = '20' + year;
+                    }
+
+                    processedLines.push(`${cardNumber}|${month}|${year}|${cvv}`);
+                });
+
+                outputArea.textContent = processedLines.join('\n');
+            }
+
+            function copyResults() {
+                const text = outputArea.textContent;
+                if (!text) {
+                    alert('No hay resultados para copiar');
+                    return;
+                }
+
+                navigator.clipboard.writeText(text)
+                    .then(() => {
+                        copyBtn.textContent = '¡Copiado!';
+                        setTimeout(() => {
+                            copyBtn.textContent = 'Copiar Resultados';
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Error al copiar: ', err);
+                        alert('Error al copiar al portapapeles');
+                    });
+            }
+        });
+    </script>
+</body>
+</html>

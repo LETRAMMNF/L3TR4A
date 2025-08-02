@@ -1,1 +1,0 @@
-https://t.me/your_bot_name?start=your_miniapp_url
